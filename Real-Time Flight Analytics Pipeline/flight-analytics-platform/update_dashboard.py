@@ -12,9 +12,16 @@ import os
 import sys
 import json
 import re
+import datetime
 from configs.app_config import AppConfig
 from utils.spark_utils import SparkSessionManager
 from utils.logger import FlightLogger
+
+def json_serial(obj):
+    """JSON serializer for datetime or other objects not serializable by default json."""
+    if isinstance(obj, (datetime.datetime, datetime.date)):
+        return obj.isoformat()
+    return str(obj)
 
 # Initialize logging at WARNING level to keep console output clean
 FlightLogger.initialize(level="WARNING")
@@ -93,25 +100,25 @@ def main():
     # Regex replacements to update the javascript variables
     html_content = re.sub(
         r"const kpiData = \[[\s\S]*?\];",
-        f"const kpiData = {json.dumps(kpis, indent=12)};",
+        f"const kpiData = {json.dumps(kpis, indent=12, default=json_serial)};",
         html_content
     )
     
     html_content = re.sub(
         r"const countriesData = \[[\s\S]*?\];",
-        f"const countriesData = {json.dumps(countries, indent=12)};",
+        f"const countriesData = {json.dumps(countries, indent=12, default=json_serial)};",
         html_content
     )
     
     html_content = re.sub(
         r"const anomaliesData = \[[\s\S]*?\];",
-        f"const anomaliesData = {json.dumps(anomalies, indent=12)};",
+        f"const anomaliesData = {json.dumps(anomalies, indent=12, default=json_serial)};",
         html_content
     )
     
     html_content = re.sub(
         r"const quarantineData = \[[\s\S]*?\];",
-        f"const quarantineData = {json.dumps(quarantine, indent=12)};",
+        f"const quarantineData = {json.dumps(quarantine, indent=12, default=json_serial)};",
         html_content
     )
 
