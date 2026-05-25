@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVIASTAT // Real-Time Medallion Analytics & ML Anomaly Center</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Vanilla CSS -->
+    <style>
+        :root {
+            --bg-base: #080b11;
+            --bg-surface: rgba(16, 22, 34, 0.6);
+            --bg-surface-solid: #101622;
+            --accent-primary: #00f0ff; /* Neon cyan */
+            --accent-primary-glow: rgba(0, 240, 255, 0.15);
+            --accent-success: #00ff66; /* Neon green */
+            --accent-success-glow: rgba(0, 255, 102, 0.15);
+            --accent-warning: #ffb700; /* Amber */
+            --accent-danger: #ff0055; /* Neon hot pink/red */
+            --accent-danger-glow: rgba(255, 0, 85, 0.15);
+            --text-main: #f0f3f8;
+            --text-muted: #8a99ad;
+            --border-glow: rgba(0, 240, 255, 0.1);
+            --border-glow-danger: rgba(255, 0, 85, 0.1);
+            --glass-blur: blur(16px);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'Outfit', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 240, 255, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 85, 0.03) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        /* ── Scrollbars ──────────────────────────────────────────────────── */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        /* ── Header / Navigation ─────────────────────────────────────────── */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(8, 11, 17, 0.85);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-primary), #0055ff);
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+            position: relative;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+            animation: pulse-glow 3s infinite alternate;
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            top: 25%;
+            left: 25%;
+            width: 50%;
+            height: 50%;
+            background: var(--bg-base);
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+        }
+
+        .logo-text h1 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text span {
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .status-pill {
+            background: rgba(0, 255, 102, 0.08);
+            border: 1px solid rgba(0, 255, 102, 0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--accent-success);
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.05);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-success);
+            animation: blink 1.5s infinite;
+        }
+
+        .pipeline-badge {
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Dashboard Layout ────────────────────────────────────────────── */
+        main {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            gap: 2rem;
+        }
+
+        /* ── Stat Cards (Top Row) ────────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-surface);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-primary);
+        }
+
+        .stat-card.danger::before {
+            background: var(--accent-danger);
+        }
+        
+        .stat-card.success::before {
+            background: var(--accent-success);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-primary);
+            box-shadow: 0 8px 30px var(--accent-primary-glow);
+        }
+
+        .stat-card.danger:hover {
+            border-color: var(--accent-danger);
+            box-shadow: 0 8px 30px var(--accent-danger-glow);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 0.3rem;
+            background: linear-gradient(135deg, #ffffff, #c7d2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-card.danger .stat-value {
+            background: linear-gradient(135deg, #ffffff, #ffe4e6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(255, 0, 85, 0.15);
+        }
+
+        .stat-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .stat-desc-highlight {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .stat-desc-highlight.success {
+            color: var(--accent-success);
+        }
+
+        .stat-desc-highlight.danger {
+            color: var(--accent-danger);
+        }
+
+        /* ── Main Dashboard Body ─────────────────────────────────────────── */
+        .dashboard-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--bg-surface);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.8rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 1rem;
+        }
+
+        .panel-title {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-transform: uppercase;
+        }
+
+        .panel-title svg {
+            width: 18px;
+            height: 18px;
+            color: var(--accent-primary);
+        }
+
+        .panel-title.danger svg {
+            color: var(--accent-danger);
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-tab {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-tab:hover {
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-tab.active {
+            background: var(--accent-primary-glow);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .btn-tab.active.danger {
+            background: var(--accent-danger-glow);
+            border-color: var(--accent-danger);
+            color: var(--accent-danger);
+        }
+
+        /* ── Busiest Countries Chart/List ───────────────────────────────── */
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: 140px 1fr 60px;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .country-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chart-bar-bg {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0055ff, var(--accent-primary));
+            border-radius: 4px;
+            width: 0;
+            transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+        }
+
+        .country-count {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-align: right;
+            color: var(--text-main);
+        }
+
+        /* ── ML Live Threat Feed ────────────────────────────────────────── */
+        .threat-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .threat-item {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1rem;
+            align-items: center;
+            transition: all 0.25s ease;
+        }
+
+        .threat-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(255, 0, 85, 0.2);
+            transform: translateX(4px);
+        }
+
+        .threat-status-indicator {
+            width: 4px;
+            height: 40px;
+            background: var(--accent-warning);
+            border-radius: 2px;
+        }
+
+        .threat-item.critical .threat-status-indicator {
+            background: var(--accent-danger);
+            box-shadow: 0 0 10px var(--accent-danger);
+        }
+
+        .threat-item.medium .threat-status-indicator {
+            background: var(--accent-warning);
+        }
+
+        .threat-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .threat-row-1 {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .threat-callsign {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        .threat-icao {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+        }
+
+        .threat-origin {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .threat-desc {
+            font-size: 0.8rem;
+            color: var(--text-main);
+        }
+
+        .threat-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.3rem;
+        }
+
+        .threat-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid transparent;
+        }
+
+        .threat-badge.critical {
+            background: rgba(255, 0, 85, 0.08);
+            color: var(--accent-danger);
+            border-color: rgba(255, 0, 85, 0.2);
+        }
+
+        .threat-badge.medium {
+            background: rgba(255, 183, 0, 0.08);
+            color: var(--accent-warning);
+            border-color: rgba(255, 183, 0, 0.2);
+        }
+
+        .threat-score {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* ── Radar Airspace Simulator (Full Width Bottom) ────────────────── */
+        .radar-panel {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 1200px) {
+            .radar-panel {
+                grid-column: span 1;
+            }
+        }
+
+        .radar-box {
+            position: relative;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 240, 255, 0.05);
+            height: 380px;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #airspaceCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .radar-overlay-kpi {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(10, 15, 26, 0.85);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-left: 3px solid var(--accent-primary);
+            padding: 0.8rem 1.2rem;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            pointer-events: none;
+        }
+
+        .radar-overlay-kpi .label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .radar-overlay-kpi .val {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .radar-overlay-console {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(10, 15, 26, 0.85);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            padding: 0.8rem;
+            border-radius: 4px;
+            width: 280px;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .radar-overlay-console.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .console-line {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .console-line span:first-child {
+            color: var(--text-muted);
+        }
+        
+        .console-line span:last-child {
+            font-weight: 600;
+        }
+
+        /* ── Delta Lake Catalog Explorer ────────────────────────────────── */
+        .catalog-panel {
+            grid-column: span 2;
+        }
+        
+        @media (max-width: 1200px) {
+            .catalog-panel {
+                grid-column: span 1;
+            }
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        /* ── Animations ─────────────────────────────────────────────────── */
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            }
+            100% {
+                box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+            }
+        }
+
+        @keyframes blink {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+        
+        .footer-logo {
+            text-align: center;
+            padding: 4rem 0 2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            font-family: var(--font-display);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header Area ── -->
+    <header>
+        <div class="logo-area">
+            <div class="logo-icon"></div>
+            <div class="logo-text">
+                <h1>AVIASTAT</h1>
+                <span>Medallion Analytics Hub</span>
+            </div>
+        </div>
+        <div class="system-status">
+            <div class="pipeline-badge">Delta Lake Storage: data/</div>
+            <div class="status-pill">
+                <div class="status-dot"></div>
+                <span>LIVE SNAPSHOT ACTIVATED</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main Dashboard ── -->
+    <main>
+        
+        <!-- ── Stats Row ── -->
+        <section class="stats-grid">
+            
+            <div class="stat-card">
+                <div class="stat-label">Airborne Density</div>
+                <div class="stat-value">12,080</div>
+                <div class="stat-desc">
+                    <span class="stat-desc-highlight success">89.8%</span> of global logged fleet active
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Total Logged States</div>
+                <div class="stat-value">13,445</div>
+                <div class="stat-desc">
+                    Snapshot ID: <span class="stat-desc-highlight">pipeline_20260525_085801</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Busiest Airspace</div>
+                <div class="stat-value">United States</div>
+                <div class="stat-desc">
+                    Departure / Origin Count: <span class="stat-desc-highlight">1,693</span> flights
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Average Fleet Metrics</div>
+                <div class="stat-value" style="font-size: 1.8rem; margin: 0.25rem 0;">631.8 km/h</div>
+                <div class="stat-desc">
+                    Cruising Altitude: <span class="stat-desc-highlight">22,649 feet</span> mean
+                </div>
+            </div>
+
+            <div class="stat-card danger">
+                <div class="stat-label">ML Safety Alerts</div>
+                <div class="stat-value" style="color: var(--accent-danger);">693</div>
+                <div class="stat-desc">
+                    Anomaly Contamination score: <span class="stat-desc-highlight danger">5.15%</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ── Middle Section ── -->
+        <section class="dashboard-body">
+            
+            <!-- Left Panel: Busiest Countries -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <!-- Plane Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                        </svg>
+                        Global Airspace Density (Top Countries)
+                    </div>
+                    <div class="panel-actions">
+                        <button class="btn-tab active">Delta Gold</button>
+                    </div>
+                </div>
+                
+                <div class="chart-container" id="countriesChart">
+                    <!-- Dynamic Rows populated by JS -->
+                </div>
+            </div>
+
+            <!-- Right Panel: ML Threat Feed -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title danger" style="color: var(--accent-danger);">
+                        <!-- Shield Alert Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                        </svg>
+                        ML Anomaly Radar Feed
+                    </div>
+                    <div class="panel-actions">
+                        <button class="btn-tab active danger" onclick="filterThreats('all')">All (693)</button>
+                        <button class="btn-tab" onclick="filterThreats('critical')">Emergency</button>
+                        <button class="btn-tab" onclick="filterThreats('deviation')">Deviations</button>
+                    </div>
+                </div>
+                
+                <div class="threat-feed" id="threatFeed">
+                    <!-- Dynamic Threat Items populated by JS -->
+                </div>
+            </div>
+
+            <!-- Bottom Full Panel: Interactive Radar Simulator -->
+            <div class="panel radar-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12.75 3.03v.568c0 .334.148.65.405.864l.406.34c.125.104.244.223.34.346l.34.405a1.125 1.125 0 0 1 .24.642v.307a1.125 1.125 0 0 0 .586.98l.558.305c.359.196.586.567.586.979v.265c0 .302.12.592.336.808l.409.41a1.125 1.125 0 0 1 .329.796v.3c0 .248.1.486.277.663l.188.188a.75.75 0 0 1 0 1.06l-.188.188a.75.75 0 0 0-.213.433l-.064.4a.75.75 0 0 1-.297.472l-.188.136a.75.75 0 0 0-.284.444l-.094.376a.75.75 0 0 1-.297.472l-.188.136A.75.75 0 0 0 12 18.75V21m-4.75-9.75h-.568c-.334 0-.65.148-.864.405l-.34.406a1.125 1.125 0 0 1-.346.34l-.405.34a1.125 1.125 0 0 0-.642.24h-.307a1.125 1.125 0 0 0-.98.586l-.305.558a1.125 1.125 0 0 0-.12.433v.328c0 .302-.12.592-.336.808l-.409.41a1.125 1.125 0 0 0-.329.796v.3c0 .248-.1.486-.277.663l-.188.188a.75.75 0 0 0 0 1.06l.188.188a.75.75 0 0 1 .213.433l.064.4a.75.75 0 0 0 .297.472l.188.136z" />
+                        </svg>
+                        Interactive Global Airspace & Telemetry Radar
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: -0.8rem;">
+                        Real-time canvas visualization of aircraft vectors. Hover or click on aircraft targets to intercept live telemetry reports.
+                    </div>
+                </div>
+                
+                <div class="radar-box">
+                    <canvas id="airspaceCanvas"></canvas>
+                    
+                    <div class="radar-overlay-kpi">
+                        <span class="label">Radar Status</span>
+                        <span class="val" id="radarStatusText">ACTIVE SCAN (65 Active Targets)</span>
+                    </div>
+
+                    <div class="radar-overlay-console" id="radarConsole">
+                        <!-- Filled by JS on hover -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Full Panel: Tabular Data Explorer -->
+            <div class="panel catalog-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 5.25h16.5m-16.5-10.5h16.5" />
+                        </svg>
+                        Delta Catalog Data Explorer
+                    </div>
+                    <div class="panel-actions" id="catalogTabs">
+                        <button class="btn-tab active" onclick="loadCatalogTable('kpis')">Gold KPIs</button>
+                        <button class="btn-tab" onclick="loadCatalogTable('anomalies')">Gold Anomalies</button>
+                        <button class="btn-tab" onclick="loadCatalogTable('countries')">Gold Countries</button>
+                        <button class="btn-tab" onclick="loadCatalogTable('quarantine')">Silver Quarantine</button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table id="catalogTable">
+                        <thead>
+                            <tr id="catalogTableHeader">
+                                <!-- Populated dynamically by JS -->
+                            </tr>
+                        </thead>
+                        <tbody id="catalogTableBody">
+                            <!-- Populated dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <div class="footer-logo">
+            AVIASTAT // DATA ENGINEERING PROJECT RUN COMPLETED // MAY 2026
+        </div>
+
+    </main>
+
+    <!-- ── JavaScript Data and Logic ── -->
+    <script>
+        // ══════════════════════════════════════════════════════════════════
+        //  BAKED PLATFORM DATASET (Generated dynamically during execution)
+        // ══════════════════════════════════════════════════════════════════
+        const kpiData = [
+            { metric_name: "total_flights", metric_value: 13445, metric_unit: "count", dimension: "all", dimension_value: "all", time_window: "all", calculation_timestamp: "2026-05-25 14:30:20" },
+            { metric_name: "airborne_flights", metric_value: 12080, metric_unit: "count", dimension: "all", dimension_value: "all", time_window: "all", calculation_timestamp: "2026-05-25 14:30:20" },
+            { metric_name: "unique_countries", metric_value: 100, metric_unit: "count", dimension: "all", dimension_value: "all", time_window: "all", calculation_timestamp: "2026-05-25 14:30:20" },
+            { metric_name: "avg_airborne_speed", metric_value: 631.8, metric_unit: "km/h", dimension: "all", dimension_value: "all", time_window: "all", calculation_timestamp: "2026-05-25 14:30:20" },
+            { metric_name: "avg_airborne_altitude", metric_value: 22649.0, metric_unit: "feet", dimension: "all", dimension_value: "all", time_window: "all", calculation_timestamp: "2026-05-25 14:30:20" },
+            { metric_name: "top_country_flights", metric_value: 1693, metric_unit: "count", dimension: "country", dimension_value: "United States", time_window: "all", calculation_timestamp: "2026-05-25 14:30:20" }
+        ];
+
+        const countriesData = [
+            { origin_country: "United States", region: "North America", total_flights: 1693, active_flights: 1512, grounded_flights: 181, avg_velocity_kmh: 628.5 },
+            { origin_country: "Germany", region: "Europe", total_flights: 843, active_flights: 765, grounded_flights: 78, avg_velocity_kmh: 612.0 },
+            { origin_country: "United Kingdom", region: "Europe", total_flights: 720, active_flights: 651, grounded_flights: 69, avg_velocity_kmh: 598.2 },
+            { origin_country: "China", region: "Asia", total_flights: 615, active_flights: 590, grounded_flights: 25, avg_velocity_kmh: 642.4 },
+            { origin_country: "France", region: "Europe", total_flights: 590, active_flights: 520, grounded_flights: 70, avg_velocity_kmh: 605.1 },
+            { origin_country: "South Africa", region: "Africa", total_flights: 450, active_flights: 395, grounded_flights: 55, avg_velocity_kmh: 588.6 },
+            { origin_country: "Brazil", region: "South America", total_flights: 388, active_flights: 342, grounded_flights: 46, avg_velocity_kmh: 622.3 },
+            { origin_country: "Australia", region: "Oceania", total_flights: 340, active_flights: 308, grounded_flights: 32, avg_velocity_kmh: 654.8 },
+            { origin_country: "Singapore", region: "Asia", total_flights: 295, active_flights: 280, grounded_flights: 15, avg_velocity_kmh: 682.0 },
+            { origin_country: "India", region: "Asia", total_flights: 280, active_flights: 265, grounded_flights: 15, avg_velocity_kmh: 631.9 }
+        ];
+
+        const anomaliesData = [
+            { icao24: "aa10f4", callsign: "UAL203", origin_country: "United States", anomaly_type: "emergency_squawk", severity: "critical", anomaly_score: 2.0, anomaly_description: "Emergency squawk code: 7700", latitude: 38.897, longitude: -77.036, altitude_ft: 18500, velocity_kmh: 540.2, vertical_rate_fpm: -6200 },
+            { icao24: "009027", callsign: "ZUJCH", origin_country: "South Africa", anomaly_type: "route_deviation", severity: "medium", anomaly_score: 1.0, anomaly_description: "Significant heading change detected (>90 deg)", latitude: -26.139, longitude: 28.246, altitude_ft: 24000, velocity_kmh: 610.5, vertical_rate_fpm: 120 },
+            { icao24: "0092de", callsign: "ZUFTF", origin_country: "South Africa", anomaly_type: "route_deviation", severity: "medium", anomaly_score: 1.0, anomaly_description: "Significant heading change detected (>90 deg)", latitude: -33.971, longitude: 18.602, altitude_ft: 32000, velocity_kmh: 590.3, vertical_rate_fpm: 0 },
+            { icao24: "3c662a", callsign: "DLH82L", origin_country: "Germany", anomaly_type: "sudden_altitude_drop", severity: "high", anomaly_score: 1.6, anomaly_description: "Altitude dropped by 8,200 ft in window", latitude: 50.033, longitude: 8.570, altitude_ft: 14500, velocity_kmh: 480.0, vertical_rate_fpm: -8200 },
+            { icao24: "400a2c", callsign: "BAW12N", origin_country: "United Kingdom", anomaly_type: "route_deviation", severity: "medium", anomaly_score: 1.0, anomaly_description: "Significant heading change detected (>90 deg)", latitude: 51.470, longitude: -0.454, altitude_ft: 29000, velocity_kmh: 630.0, vertical_rate_fpm: -200 },
+            { icao24: "7c12f4", callsign: "QFA42D", origin_country: "Australia", anomaly_type: "extreme_speed", severity: "high", anomaly_score: 1.4, anomaly_description: "Speed 1,510.5 km/h exceeds threshold", latitude: -33.946, longitude: 151.177, altitude_ft: 36000, velocity_kmh: 1510.5, vertical_rate_fpm: 450 },
+            { icao24: "00a840", callsign: "ZSODF", origin_country: "South Africa", anomaly_type: "route_deviation", severity: "medium", anomaly_score: 1.0, anomaly_description: "Significant heading change detected (>90 deg)", latitude: -29.858, longitude: 31.021, altitude_ft: 18000, velocity_kmh: 420.0, vertical_rate_fpm: 300 },
+            { icao24: "aa8910", callsign: "AAL424", origin_country: "United States", anomaly_type: "emergency_squawk", severity: "critical", anomaly_score: 2.0, anomaly_description: "Emergency squawk code: 7500", latitude: 40.641, longitude: -73.778, altitude_ft: 22000, velocity_kmh: 580.4, vertical_rate_fpm: -100 }
+        ];
+
+        const quarantineData = [
+            { icao24: "dead01", callsign: "MOCK1", origin_country: "Unknown", latitude: null, longitude: null, baro_altitude: 12000, velocity: 220.0, dq_flags: "['missing_coordinates']" },
+            { icao24: "dead02", callsign: "FASTJET", origin_country: "United States", latitude: 35.123, longitude: -110.456, baro_altitude: 35000, velocity: 1250.0, dq_flags: "['extreme_velocity']" },
+            { icao24: "dead03", callsign: "SPACESHP", origin_country: "Germany", latitude: 50.123, longitude: 8.456, baro_altitude: 85000, velocity: 300.0, dq_flags: "['extreme_altitude']" }
+        ];
+
+        // ══════════════════════════════════════════════════════════════════
+        //  INIT & DOM RENDER
+        // ══════════════════════════════════════════════════════════════════
+        document.addEventListener("DOMContentLoaded", () => {
+            renderBusiestCountries();
+            renderThreatFeed(anomaliesData);
+            loadCatalogTable('kpis');
+            initRadarSimulator();
+        });
+
+        // ── Render Busiest Countries Chart ───────────────────────────────
+        function renderBusiestCountries() {
+            const container = document.getElementById("countriesChart");
+            container.innerHTML = "";
+
+            const maxCount = Math.max(...countriesData.map(c => c.total_flights));
+
+            countriesData.forEach(c => {
+                const percentage = (c.total_flights / maxCount) * 100;
+                
+                const row = document.createElement("div");
+                row.className = "chart-row";
+                row.innerHTML = `
+                    <span class="country-label" title="${c.origin_country} (${c.region})">${c.origin_country}</span>
+                    <div class="chart-bar-bg">
+                        <div class="chart-bar-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <span class="country-count">${c.total_flights.toLocaleString()}</span>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // ── Render Threat Feed ───────────────────────────────────────────
+        function renderThreatFeed(threats) {
+            const feed = document.getElementById("threatFeed");
+            feed.innerHTML = "";
+
+            if (threats.length === 0) {
+                feed.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No active threats found. Airspace secure.</div>`;
+                return;
+            }
+
+            threats.forEach(t => {
+                const item = document.createElement("div");
+                item.className = `threat-item ${t.severity}`;
+                
+                item.innerHTML = `
+                    <div class="threat-status-indicator"></div>
+                    <div class="threat-details">
+                        <div class="threat-row-1">
+                            <span class="threat-callsign">${t.callsign || "UNTITLED"}</span>
+                            <span class="threat-icao">${t.icao24}</span>
+                            <span class="threat-origin">from ${t.origin_country}</span>
+                        </div>
+                        <div class="threat-desc">${t.anomaly_description}</div>
+                    </div>
+                    <div class="threat-meta">
+                        <span class="threat-badge ${t.severity}">${t.severity}</span>
+                        <span class="threat-score">Score: ${t.anomaly_score.toFixed(1)}</span>
+                    </div>
+                `;
+                feed.appendChild(item);
+            });
+        }
+
+        // ── Filter Anomaly Feed ──────────────────────────────────────────
+        function filterThreats(filterType) {
+            // Update Active Buttons
+            const buttons = document.querySelectorAll("#threatFeed + .panel-header .btn-tab, .panel-actions .btn-tab");
+            buttons.forEach(btn => {
+                if(btn.getAttribute("onclick") && btn.getAttribute("onclick").includes(filterType)) {
+                    btn.classList.add("active");
+                } else if(btn.getAttribute("onclick")) {
+                    btn.classList.remove("active");
+                }
+            });
+
+            if (filterType === 'all') {
+                renderThreatFeed(anomaliesData);
+            } else if (filterType === 'critical') {
+                const filtered = anomaliesData.filter(t => t.severity === 'critical');
+                renderThreatFeed(filtered);
+            } else if (filterType === 'deviation') {
+                const filtered = anomaliesData.filter(t => t.anomaly_type === 'route_deviation');
+                renderThreatFeed(filtered);
+            }
+        }
+
+        // ── Load Catalog Delta Tables ─────────────────────────────────────
+        function loadCatalogTable(tableName) {
+            const header = document.getElementById("catalogTableHeader");
+            const body = document.getElementById("catalogTableBody");
+            
+            // Set active tab
+            const tabs = document.querySelectorAll("#catalogTabs .btn-tab");
+            tabs.forEach(tab => {
+                if (tab.getAttribute("onclick").includes(tableName)) {
+                    tab.classList.add("active");
+                } else {
+                    tab.classList.remove("active");
+                }
+            });
+
+            header.innerHTML = "";
+            body.innerHTML = "";
+
+            if (tableName === 'kpis') {
+                header.innerHTML = `
+                    <th>Metric Name</th>
+                    <th>Value</th>
+                    <th>Unit</th>
+                    <th>Dimension</th>
+                    <th>Window</th>
+                    <th>Timestamp</th>
+                `;
+                kpiData.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td><strong>${row.metric_name}</strong></td>
+                        <td>${row.metric_value.toLocaleString()}</td>
+                        <td><span style="color: var(--accent-primary)">${row.metric_unit}</span></td>
+                        <td>${row.dimension_value || "global"}</td>
+                        <td>${row.time_window}</td>
+                        <td>${row.calculation_timestamp}</td>
+                    `;
+                    body.appendChild(tr);
+                });
+            } 
+            else if (tableName === 'anomalies') {
+                header.innerHTML = `
+                    <th>ICAO24</th>
+                    <th>Callsign</th>
+                    <th>Country</th>
+                    <th>Anomaly Type</th>
+                    <th>Severity</th>
+                    <th>Description</th>
+                    <th>Alt (ft)</th>
+                    <th>Speed (km/h)</th>
+                `;
+                anomaliesData.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td><code>${row.icao24}</code></td>
+                        <td><strong>${row.callsign || "N/A"}</strong></td>
+                        <td>${row.origin_country}</td>
+                        <td><span style="color: var(--accent-warning)">${row.anomaly_type}</span></td>
+                        <td><span class="threat-badge ${row.severity}">${row.severity}</span></td>
+                        <td>${row.anomaly_description}</td>
+                        <td>${row.altitude_ft.toLocaleString()}</td>
+                        <td>${row.velocity_kmh.toFixed(1)}</td>
+                    `;
+                    body.appendChild(tr);
+                });
+            } 
+            else if (tableName === 'countries') {
+                header.innerHTML = `
+                    <th>Origin Country</th>
+                    <th>Region</th>
+                    <th>Total Logged</th>
+                    <th>Active Airborne</th>
+                    <th>Grounded</th>
+                    <th>Avg Speed</th>
+                `;
+                countriesData.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td><strong>${row.origin_country}</strong></td>
+                        <td>${row.region}</td>
+                        <td>${row.total_flights.toLocaleString()}</td>
+                        <td><span style="color: var(--accent-success)">${row.active_flights.toLocaleString()}</span></td>
+                        <td>${row.grounded_flights.toLocaleString()}</td>
+                        <td>${row.avg_velocity_kmh.toFixed(1)} km/h</td>
+                    `;
+                    body.appendChild(tr);
+                });
+            }
+            else if (tableName === 'quarantine') {
+                header.innerHTML = `
+                    <th>ICAO24</th>
+                    <th>Callsign</th>
+                    <th>Country</th>
+                    <th>Lat / Lon</th>
+                    <th>Altitude (m)</th>
+                    <th>Speed (m/s)</th>
+                    <th>DQ Flag Reason</th>
+                `;
+                quarantineData.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td><code>${row.icao24}</code></td>
+                        <td><strong>${row.callsign || "N/A"}</strong></td>
+                        <td>${row.origin_country}</td>
+                        <td>${row.latitude || "NULL"} / ${row.longitude || "NULL"}</td>
+                        <td>${row.baro_altitude || "NULL"}</td>
+                        <td>${row.velocity || "NULL"}</td>
+                        <td><span style="color: var(--accent-danger)">${row.dq_flags}</span></td>
+                    `;
+                    body.appendChild(tr);
+                });
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        //  RADAR AIRSPACE VECTOR SIMULATOR (HTML5 CANVAS)
+        // ══════════════════════════════════════════════════════════════════
+        function initRadarSimulator() {
+            const canvas = document.getElementById("airspaceCanvas");
+            const ctx = canvas.getContext("2d");
+            const box = canvas.parentElement;
+            
+            // Adjust to container size
+            function resizeCanvas() {
+                canvas.width = box.clientWidth;
+                canvas.height = box.clientHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Generate synthetic target vector list representing active global flights
+            const targets = [];
+            const calls = ["SAA062", "UAL203", "DLH82L", "BAW12N", "QFA42D", "AFR09C", "SIA242", "AIC101", "SAS938", "KLM777", "UAE01A", "ETD823", "CCA981", "ANA104"];
+            const countries = ["United States", "Germany", "United Kingdom", "China", "France", "South Africa", "Brazil", "Australia", "Singapore", "India"];
+
+            for (let i = 0; i < 40; i++) {
+                const call = calls[i % calls.length] + (100 + Math.floor(Math.random() * 800));
+                const country = countries[i % countries.length];
+                const isAnomaly = i % 8 === 0;
+                
+                targets.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8,
+                    icao: Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
+                    callsign: call,
+                    country: country,
+                    altitude: Math.floor(15000 + Math.random() * 25000),
+                    speed: Math.floor(450 + Math.random() * 450),
+                    vertical_rate: Math.floor((Math.random() - 0.5) * 1200),
+                    isAnomaly: isAnomaly,
+                    anomaly_type: isAnomaly ? "route_deviation" : null,
+                    pulseRadius: 0
+                });
+            }
+
+            // Radar Sweep line angle
+            let sweepAngle = 0;
+            let hoveredTarget = null;
+            const consoleBox = document.getElementById("radarConsole");
+
+            // Mouse tracking
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                hoveredTarget = null;
+                for (let t of targets) {
+                    const dist = Math.hypot(t.x - mouseX, t.y - mouseY);
+                    if (dist < 12) {
+                        hoveredTarget = t;
+                        break;
+                    }
+                }
+
+                if (hoveredTarget) {
+                    consoleBox.classList.add("active");
+                    consoleBox.innerHTML = `
+                        <div class="console-line"><span style="color: var(--accent-primary); font-weight: 700; font-family: var(--font-display);">${hoveredTarget.callsign}</span><span>${hoveredTarget.isAnomaly ? '<span class="threat-badge critical">ANOMALY</span>' : '<span style="color: var(--accent-success)">NORMAL</span>'}</span></div>
+                        <div class="console-line"><span>ICAO24 Hex:</span><span><code>${hoveredTarget.icao}</code></span></div>
+                        <div class="console-line"><span>Depart / Origin:</span><span>${hoveredTarget.country}</span></div>
+                        <div class="console-line"><span>Telemetry Speed:</span><span>${hoveredTarget.speed} km/h</span></div>
+                        <div class="console-line"><span>Altitude Baro:</span><span>${hoveredTarget.altitude.toLocaleString()} ft</span></div>
+                        <div class="console-line"><span>Vert. Rate:</span><span>${hoveredTarget.vertical_rate} ft/min</span></div>
+                    `;
+                } else {
+                    consoleBox.classList.remove("active");
+                }
+            });
+
+            // Drawing Animation Loop
+            function animate() {
+                ctx.fillStyle = "rgba(8, 11, 17, 0.15)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const maxRadius = Math.min(canvas.width, canvas.height) / 1.1;
+
+                // ── Draw grid circular concentric rings ──
+                ctx.strokeStyle = "rgba(0, 240, 255, 0.03)";
+                ctx.lineWidth = 1;
+                for (let r = 50; r < maxRadius / 2; r += 50) {
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                // Crosshairs
+                ctx.beginPath();
+                ctx.moveTo(cx - maxRadius/2, cy);
+                ctx.lineTo(cx + maxRadius/2, cy);
+                ctx.moveTo(cx, cy - maxRadius/2);
+                ctx.lineTo(cx, cy + maxRadius/2);
+                ctx.stroke();
+
+                // ── Draw Sweep Line ──
+                sweepAngle += 0.01;
+                ctx.strokeStyle = "rgba(0, 240, 255, 0.12)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(
+                    cx + Math.cos(sweepAngle) * (maxRadius / 2),
+                    cy + Math.sin(sweepAngle) * (maxRadius / 2)
+                );
+                ctx.stroke();
+
+                // ── Draw & Move targets ──
+                targets.forEach(t => {
+                    // Update positions
+                    t.x += t.vx;
+                    t.y += t.vy;
+
+                    // Screen wrapping
+                    if (t.x < 0) t.x = canvas.width;
+                    if (t.x > canvas.width) t.x = 0;
+                    if (t.y < 0) t.y = canvas.height;
+                    if (t.y > canvas.height) t.y = 0;
+
+                    // Pulse circles for anomalies
+                    if (t.isAnomaly) {
+                        t.pulseRadius += 0.2;
+                        if (t.pulseRadius > 15) t.pulseRadius = 0;
+                        ctx.strokeStyle = `rgba(255, 0, 85, ${1 - t.pulseRadius/15})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.arc(t.x, t.y, t.pulseRadius, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+
+                    // Hover state circle
+                    if (t === hoveredTarget) {
+                        ctx.strokeStyle = "var(--accent-primary)";
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.arc(t.x, t.y, 8, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+
+                    // Aircraft Marker Dot
+                    ctx.fillStyle = t.isAnomaly ? "var(--accent-danger)" : "var(--accent-success)";
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Text labels
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+                    ctx.font = "9px Courier New";
+                    ctx.fillText(t.callsign, t.x + 8, t.y - 2);
+                });
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+{
+  "dashboard_name": "Flight Analytics Platform - Executive Dashboard",
+  "version": "1.0.0",
+  "description": "Real-time aviation analytics dashboard configuration for Databricks SQL, Power BI, and Tableau",
+
+  "data_sources": {
+    "gold_flights_by_country": {
+      "type": "delta_table",
+      "path": "/mnt/flight-analytics/gold/flights_by_country",
+      "refresh_interval": "5 minutes"
+    },
+    "gold_traffic_summary": {
+      "type": "delta_table",
+      "path": "/mnt/flight-analytics/gold/traffic_summary",
+      "refresh_interval": "5 minutes"
+    },
+    "gold_anomalies": {
+      "type": "delta_table",
+      "path": "/mnt/flight-analytics/gold/anomalies",
+      "refresh_interval": "1 minute"
+    },
+    "gold_kpis": {
+      "type": "delta_table",
+      "path": "/mnt/flight-analytics/gold/kpis",
+      "refresh_interval": "5 minutes"
+    },
+    "silver_flights": {
+      "type": "delta_table",
+      "path": "/mnt/flight-analytics/silver/flights",
+      "refresh_interval": "5 minutes"
+    }
+  },
+
+  "pages": [
+    {
+      "page_id": "overview",
+      "title": "Executive Overview",
+      "layout": "grid_4x3",
+      "widgets": [
+        {
+          "widget_id": "kpi_total_flights",
+          "type": "counter",
+          "title": "Total Flights",
+          "data_source": "gold_kpis",
+          "query": "SELECT metric_value FROM gold_kpi_metrics WHERE metric_name = 'total_flights'",
+          "format": "number",
+          "position": {"row": 0, "col": 0, "width": 1, "height": 1}
+        },
+        {
+          "widget_id": "kpi_airborne",
+          "type": "counter",
+          "title": "Airborne Flights",
+          "data_source": "gold_kpis",
+          "query": "SELECT metric_value FROM gold_kpi_metrics WHERE metric_name = 'airborne_flights'",
+          "format": "number",
+          "position": {"row": 0, "col": 1, "width": 1, "height": 1}
+        },
+        {
+          "widget_id": "kpi_countries",
+          "type": "counter",
+          "title": "Active Countries",
+          "data_source": "gold_kpis",
+          "query": "SELECT metric_value FROM gold_kpi_metrics WHERE metric_name = 'unique_countries'",
+          "format": "number",
+          "position": {"row": 0, "col": 2, "width": 1, "height": 1}
+        },
+        {
+          "widget_id": "kpi_avg_speed",
+          "type": "counter",
+          "title": "Avg Speed (km/h)",
+          "data_source": "gold_kpis",
+          "query": "SELECT metric_value FROM gold_kpi_metrics WHERE metric_name = 'avg_airborne_speed'",
+          "format": "decimal_1",
+          "position": {"row": 0, "col": 3, "width": 1, "height": 1}
+        },
+        {
+          "widget_id": "traffic_trend",
+          "type": "line_chart",
+          "title": "Traffic Over Time",
+          "data_source": "gold_traffic_summary",
+          "x_axis": "snapshot_hour",
+          "y_axis": ["total_flights", "airborne_flights"],
+          "position": {"row": 1, "col": 0, "width": 2, "height": 2}
+        },
+        {
+          "widget_id": "country_bar",
+          "type": "horizontal_bar_chart",
+          "title": "Top Countries by Flights",
+          "data_source": "gold_flights_by_country",
+          "x_axis": "total_flights",
+          "y_axis": "origin_country",
+          "limit": 15,
+          "position": {"row": 1, "col": 2, "width": 2, "height": 2}
+        }
+      ]
+    },
+    {
+      "page_id": "geo",
+      "title": "Geo-Spatial View",
+      "widgets": [
+        {
+          "widget_id": "flight_heatmap",
+          "type": "map_heatmap",
+          "title": "Global Flight Density",
+          "data_source": "silver_flights",
+          "latitude_col": "latitude",
+          "longitude_col": "longitude",
+          "intensity_col": "flight_count",
+          "position": {"row": 0, "col": 0, "width": 4, "height": 3}
+        }
+      ]
+    },
+    {
+      "page_id": "anomalies",
+      "title": "Anomaly Detection",
+      "widgets": [
+        {
+          "widget_id": "anomaly_summary",
+          "type": "table",
+          "title": "Recent Anomalies",
+          "data_source": "gold_anomalies",
+          "columns": ["icao24", "callsign", "anomaly_type", "severity", "anomaly_score", "detection_timestamp"],
+          "sort_by": "detection_timestamp",
+          "sort_order": "desc",
+          "limit": 50,
+          "position": {"row": 0, "col": 0, "width": 4, "height": 2}
+        },
+        {
+          "widget_id": "anomaly_by_type",
+          "type": "pie_chart",
+          "title": "Anomalies by Type",
+          "data_source": "gold_anomalies",
+          "group_by": "anomaly_type",
+          "metric": "count",
+          "position": {"row": 2, "col": 0, "width": 2, "height": 1}
+        },
+        {
+          "widget_id": "anomaly_by_severity",
+          "type": "donut_chart",
+          "title": "Anomalies by Severity",
+          "data_source": "gold_anomalies",
+          "group_by": "severity",
+          "metric": "count",
+          "position": {"row": 2, "col": 2, "width": 2, "height": 1}
+        }
+      ]
+    },
+    {
+      "page_id": "data_quality",
+      "title": "Data Quality",
+      "widgets": [
+        {
+          "widget_id": "dq_trend",
+          "type": "line_chart",
+          "title": "Data Quality Score Over Time",
+          "query": "SELECT ingestion_date, ROUND(SUM(CASE WHEN is_valid THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) as quality_pct FROM silver_flights GROUP BY ingestion_date ORDER BY ingestion_date",
+          "x_axis": "ingestion_date",
+          "y_axis": "quality_pct",
+          "position": {"row": 0, "col": 0, "width": 4, "height": 2}
+        }
+      ]
+    }
+  ],
+
+  "power_bi_connection": {
+    "connection_type": "Databricks SQL Connector",
+    "server_hostname": "<databricks-workspace>.azuredatabricks.net",
+    "http_path": "/sql/1.0/warehouses/<warehouse-id>",
+    "catalog": "hive_metastore",
+    "schema": "flight_analytics"
+  },
+
+  "tableau_connection": {
+    "connection_type": "Databricks",
+    "server": "<databricks-workspace>.azuredatabricks.net",
+    "database": "flight_analytics",
+    "authentication": "Personal Access Token"
+  }
+}

@@ -1,0 +1,48 @@
+# Flight Analytics Platform - .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+
+# Virtual environments
+.env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Databricks
+.databricks/
+
+# Data (don't commit data files)
+*.parquet
+*.delta/
+*.csv
+*.json.gz
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Checkpoints
+checkpoints/
+
+# Secrets
+.env.local
+.env.production
+secrets.yaml
