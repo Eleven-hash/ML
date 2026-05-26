@@ -39,7 +39,10 @@ def main():
     
     logger.info(f"Local Delta Lake storage directory set to: {local_data_dir}")
 
-    # Configure PySpark worker python executable to avoid Windows Microsoft Store app execution alias issues
+    # Configure local Java, Hadoop, and PySpark variables
+    os.environ["HADOOP_HOME"] = os.path.abspath(os.path.join(os.path.dirname(__file__), "hadoop"))
+    os.environ["JAVA_HOME"] = "C:/Program Files/Eclipse Adoptium/jdk-17.0.19.10-hotspot"
+    os.environ["PATH"] = f"{os.environ['JAVA_HOME']}/bin;{os.environ['HADOOP_HOME']}/bin;" + os.environ["PATH"]
     os.environ["PYSPARK_PYTHON"] = sys.executable
     os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
